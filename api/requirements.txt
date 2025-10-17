@@ -1,0 +1,4 @@
+# Requerimientos del backend Flask
+Flask
+SQLAlchemy
+pytest

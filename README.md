@@ -1,2 +1,2 @@
-# Lumina
-Aplicación de organización académica.
+# Lumina 🌙
+Proyecto base - estructura inicial.
