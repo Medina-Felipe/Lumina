@@ -1,17 +1,10 @@
 import React from 'react';
-import './index.css';
+import TareasPage from './pages/TareasPage';
 
 function App() {
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: '#1f2937',
-      color: 'white',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      fontSize: '24px'
-    }}>
+    <div className="min-h-screen bg-gray-900 text-white">
+      <TareasPage />
     </div>
   );
 }
