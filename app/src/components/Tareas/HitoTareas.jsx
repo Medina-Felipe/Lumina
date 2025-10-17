@@ -19,12 +19,12 @@ const HitoTareas = () => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-white">Tareas</h2>
         
-        <div className="flex space-x-3 text-gray-400">
-          <button className="hover:text-orange-500 transition-colors">
-            ☰
+        <div className="flex space-x-3 text-gray-400 items-center">
+          <button className="text-2xl hover:text-orange-500 transition-colors transform -translate-y-[1px]">
+            +
           </button>
           <button className="hover:text-orange-500 transition-colors">
-            {/*falta agregar logo*/}
+            ☰
           </button>
         </div>
       </div>

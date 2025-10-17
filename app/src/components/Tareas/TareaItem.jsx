@@ -18,7 +18,7 @@ return (
         onChange={() => ontoggle(tarea.id)}
 
     //-----Estilo base-------
-    className="mt-1 mr-3 h-4 w-4 bg-gray-700 border-gray-500 rounded appearance-none checked:bg-orange-500 checked:border-transparent cursor-pointer"
+    className="mt-1 mr-3 h-4 w-4 bg-gray-700 border-gray-500 rounded appearance-none checked:bg-green-500 checked:border-transparent cursor-pointer"
     />
 
     <div className="flex-1">
