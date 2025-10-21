@@ -1,18 +1,7 @@
-import React, { useState } from 'react';
 import TareaItem from './TareaItem';
-import { tareasHitoSeleccionado as mockTareas } from '../../utils/mockData'; 
 
-const HitoTareas = () => {
-  const [tareas, setTareas] = useState(mockTareas);
+const HitoTareas = ({ tareas = [], onToggle }) => {  const [tareas, setTareas] = useState(mockTareas);
 
-  const toggleComplete = (id) => {
-    setTareas(prevTareas => 
-      prevTareas.map(tarea =>
-        tarea.id === id ? { ...tarea, completada: !tarea.completada } : tarea
-      )
-    );
-  };
-  
   return (
     <div className="p-6"> 
       
@@ -30,16 +19,20 @@ const HitoTareas = () => {
       </div>
 
       <div className="space-y-1">
-        {tareas.map(tarea => (
-          <TareaItem 
-            key={tarea.id} 
-            tarea={tarea} 
-            onToggle={toggleComplete} 
-          />
-        ))}
-      </div>
-    </div>
-  );
+                {tareas.length === 0 ? (
+                    <p className="text-gray-500">No hay tareas asociadas a este hito.</p>
+                ) : (
+                    tareas.map(tarea => (
+                        <TareaItem 
+                            key={tarea.id} 
+                            tarea={tarea} 
+                            onToggle={onToggle} 
+                        />
+                    ))
+                )}
+            </div>
+        </div>
+    );
 };
 
 export default HitoTareas;
