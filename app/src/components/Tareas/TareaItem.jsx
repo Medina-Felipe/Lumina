@@ -22,13 +22,13 @@ return (
     />
 
     <div className="flex-1">
-        <p className={'text-base font-medium ${nombreClase}'}>
-            {tarea.nombre}
+        <p className={`text-base font-medium ${nombreClase}`}>
+            {tarea.titulo}
         </p>
     </div>
 
-    <p className={'text-sm ${descClase}'}>
-        {tarea.desc}
+    <p className={`text-sm ${descClase}`}>
+        {tarea.descripcion}
     </p>
     </div>
 );

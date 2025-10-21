@@ -1,11 +1,11 @@
 // app/src/pages/TareasPage.jsx
 
 import React, { useState, useEffect } from "react";
-import React from "react";
 import HitoTareas from '../components/Tareas/HitoTareas'; 
 import { TareaService } from '../utils/apiClient';
 
 const TareasPage = () => {
+    const HITO_ID_ACTUAL = 1;
     const [tareas, setTareas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -42,7 +42,7 @@ const TareasPage = () => {
     useEffect(() => {
         const fetchTareas = async () => {
             try {
-                const data = await TareaService.getAll(); 
+                const data = await TareaService.getAll(HITO_ID_ACTUAL); 
                 setTareas(data);
             } catch (err) {
                 console.error("Error al cargar las tareas desde la API:", err);

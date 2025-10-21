@@ -1,6 +1,7 @@
+import React from 'react';
 import TareaItem from './TareaItem';
 
-const HitoTareas = ({ tareas = [], onToggle }) => {  const [tareas, setTareas] = useState(mockTareas);
+const HitoTareas = ({ tareas = [], onToggle }) => {  
 
   return (
     <div className="p-6"> 

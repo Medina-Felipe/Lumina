@@ -8,9 +8,9 @@ const apiClient = axios.create({
 });
 
 export const TareaService = {
-    getAll: async () => {
+    getAll: async (hitoId) => {
     try {
-      const response = await apiClient.get('/hitos/${hitoId}/tareas'); 
+      const response = await apiClient.get(`/api/hitos/${hitoId}/tareas`); 
       return response.data;
     } catch (error) {
       console.error("Error al obtener las tareas:", error);
@@ -18,9 +18,9 @@ export const TareaService = {
     }
   },
 
-  create: async (tareaData) => {
+  create: async (hitoId, tareaData) => {
     try {
-      const response = await apiClient.post('/hitos/${hitoId}/tareas', tareaData);
+      const response = await apiClient.post(`/api/hitos/${hitoId}/tareas`, tareaData);
       return response.data;
     } catch (error) {
       console.error("Error al crear la tarea:", error);
@@ -30,7 +30,7 @@ export const TareaService = {
 
   remove: async (id) => {
     try {
-      const response = await apiClient.delete(`/tareas/${id}`);
+      const response = await apiClient.delete(`/api/tareas/${id}`);
       return response.data;
     } catch (error) {
       console.error(`Error al eliminar tarea con ID ${id}:`, error);
@@ -39,7 +39,7 @@ export const TareaService = {
   },
 
     update: async (id, data) => { 
-        const response = await apiClient.put(`/tareas/${id}`, data);
+        const response = await apiClient.put(`/api/tareas/${id}`, data);
         return response.data;
     },
 };
