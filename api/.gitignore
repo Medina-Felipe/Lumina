@@ -1,0 +1,27 @@
+# Entorno virtual de Python
+venv/
+.venv/
+env/
+.env
+
+# Archivos de caché de Python
+__pycache__/
+*.py[cod]
+
+# Archivos de base de datos de SQLite
+*.db
+*.db-journal
+
+# Carpeta de caché de Pytest
+.pytest_cache/
+
+# Archivos del sistema operativo (Windows/macOS)
+.DS_Store
+Thumbs.db
+
+# Archivos del editor VS Code
+.vscode/
+
+# Archivos de migración de Alembic (Flask-Migrate)
+# Mantenemos la carpeta /migrations, pero ignoramos el log
+alembic.log

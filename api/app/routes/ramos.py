@@ -1,116 +1,109 @@
+# api/app/routes/ramos.py
 from flask import Blueprint, jsonify, request
-# Importamos todo lo que necesitamos de la DB y utils
-from ..fake_db import db_ramos, db_hitos, db_tareas, next_ramo_id, next_hito_id
-from ..utils import calcular_progreso_hito, calcular_tiempo_hito
+from .. import db
+from ..models import Ramo, Hito
+# --- ¡Nuevas importaciones! ---
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
-# Cambiamos el nombre del blueprint para más claridad (opcional)
-# Lo llamaremos 'ramos_bp' para que sea claro en el __init__.py
 bp = Blueprint("ramos", __name__)
 
-# --- RUTAS DE RAMOS ---
-
 @bp.route("/", methods=["GET"])
+@jwt_required() # <-- 1. ¡Ruta protegida!
 def get_ramos():
-    """Devuelve todos los ramos con sus hitos y tareas anidadas."""
-    ramos_completos = []
-    for ramo in db_ramos:
-        ramo_dict = ramo.copy()
-        hitos_del_ramo = []
-        hitos_en_db_para_este_ramo = [h for h in db_hitos if h["ramo_id"] == ramo["id"]]
-        for hito in hitos_en_db_para_este_ramo:
-            hito_dict = hito.copy()
-            tareas_del_hito = [t.copy() for t in db_tareas if t["hito_id"] == hito["id"]]
-            hito_dict["tareas"] = tareas_del_hito
-            hito_dict["progreso"] = calcular_progreso_hito(hito["id"])
-            hito_dict["tiempo_total"] = calcular_tiempo_hito(hito["id"])
-            hitos_del_ramo.append(hito_dict)
-        ramo_dict["hitos"] = hitos_del_ramo
-        if hitos_del_ramo:
-            ramo_dict["progreso"] = sum(h["progreso"] for h in hitos_del_ramo) / len(hitos_del_ramo)
-            ramo_dict["tiempo_total"] = sum(h["tiempo_total"] for h in hitos_del_ramo)
-        else:
-            ramo_dict["progreso"] = 0
-            ramo_dict["tiempo_total"] = 0
-        ramos_completos.append(ramo_dict)
-    return jsonify(ramos_completos)
+    """Devuelve TODOS los ramos PERO solo del usuario que ha iniciado sesión."""
+    # 2. Obtenemos el ID del usuario desde su token
+    current_user_id = get_jwt_identity()
+    
+    # 3. Filtramos la base de datos
+    ramos = Ramo.query.filter_by(usuario_id=current_user_id).all()
+    
+    return jsonify([ramo.to_dict() for ramo in ramos])
 
 @bp.route("/", methods=["POST"])
+@jwt_required() # <-- Ruta protegida
 def create_ramo():
-    """Crea un nuevo ramo."""
-    global next_ramo_id
+    """Crea un nuevo ramo para el usuario actual."""
+    current_user_id = get_jwt_identity()
     data = request.json
-    nuevo_ramo = {
-        "id": next_ramo_id,
-        "titulo": data.get("titulo", "Ramo sin título"),
-        "descripcion": data.get("descripcion"),
-        "prioridad": data.get("prioridad", "Media"),
-        "estado": "Pendiente",
-    }
-    db_ramos.append(nuevo_ramo)
-    next_ramo_id += 1
-    return jsonify(nuevo_ramo), 201
+    
+    nuevo_ramo = Ramo(
+        titulo=data.get("titulo", "Ramo sin título"),
+        descripcion=data.get("descripcion"),
+        prioridad=data.get("prioridad", "Media"),
+        estado="Pendiente",
+        usuario_id=current_user_id  # <-- 4. Asignamos el ramo al usuario
+    )
+    
+    db.session.add(nuevo_ramo)
+    db.session.commit()
+    
+    return jsonify(nuevo_ramo.to_dict()), 201
 
 @bp.route("/<int:ramo_id>", methods=["DELETE"])
+@jwt_required() # <-- Ruta protegida
 def delete_ramo(ramo_id):
-    """Elimina un ramo y todo su contenido (hitos y tareas asociadas)."""
-    global db_ramos, db_hitos, db_tareas
-    ramo_a_borrar = next((r for r in db_ramos if r["id"] == ramo_id), None)
+    """Elimina un ramo, verificando que pertenezca al usuario."""
+    current_user_id = get_jwt_identity()
+    
+    # 5. Buscamos el ramo Y verificamos que sea del usuario actual
+    ramo_a_borrar = Ramo.query.filter_by(id=ramo_id, usuario_id=current_user_id).first()
+    
     if not ramo_a_borrar:
-        return jsonify({"error": "Ramo no encontrado"}), 404
-    hitos_del_ramo_ids = [h["id"] for h in db_hitos if h["ramo_id"] == ramo_id]
-    # Usamos [:] para modificar la lista global "in-place" (¡muy bien hecho!)
-    db_tareas[:] = [t for t in db_tareas if t["hito_id"] not in hitos_del_ramo_ids]
-    db_hitos[:] = [h for h in db_hitos if h["ramo_id"] != ramo_id]
-    db_ramos.remove(ramo_a_borrar)
+        # Si no se encuentra o no es del usuario, devolvemos 404
+        return jsonify({"error": "Ramo no encontrado o no autorizado"}), 404
+        
+    db.session.delete(ramo_a_borrar)
+    db.session.commit()
+    
     return jsonify({"mensaje": "Ramo eliminado"}), 200
 
-# --- RUTAS DE HIJOS (Hitos y Gráficos) ---
+# --- RUTAS DE "HIJOS" (Hitos y Gráficos) ---
 
 @bp.route("/<int:ramo_id>/hitos", methods=["POST"])
+@jwt_required() # <-- Ruta protegida
 def create_hito(ramo_id):
-    """
-    (MOVIDO DESDE hitos.py)
-    Crea un nuevo hito para un ramo específico.
-    URL: POST /api/ramos/<id>/hitos
-    """
-    global next_hito_id
+    """Crea un hito, verificando que el ramo padre pertenezca al usuario."""
+    current_user_id = get_jwt_identity()
+    
+    # 6. Verificamos que el ramo "padre" exista Y sea del usuario
+    ramo_padre = Ramo.query.filter_by(id=ramo_id, usuario_id=current_user_id).first_or_404()
+    
     data = request.json
-    nuevo_hito = {
-        "id": next_hito_id,
-        "titulo": data.get("titulo", "Nuevo Hito"),
-        "descripcion": data.get("descripcion"),
-        "importancia": data.get("importancia", 3),
-        "porcentaje_evaluacion": data.get("porcentaje_evaluacion", 0),
-        "ramo_id": ramo_id
-    }
-    db_hitos.append(nuevo_hito)
-    next_hito_id += 1
-    return jsonify(nuevo_hito), 201
+    nuevo_hito = Hito(
+        titulo=data.get("titulo", "Nuevo Hito"),
+        descripcion=data.get("descripcion"),
+        ramo_id=ramo_padre.id 
+    )
+    
+    db.session.add(nuevo_hito)
+    db.session.commit()
+    
+    return jsonify(nuevo_hito.to_dict()), 201
+
+# --- Rutas de Gráficos (Protegidas) ---
 
 @bp.route("/<int:ramo_id>/grafico/tiempo", methods=["GET"])
+@jwt_required() # <-- Ruta protegida
 def get_grafico_tiempo(ramo_id):
-    """
-    (MOVIDO DESDE graficos.py)
-    Prepara datos para un gráfico de tiempo por hito.
-    URL: GET /api/ramos/<id>/grafico/tiempo
-    """
-    hitos_del_ramo = [h for h in db_hitos if h["ramo_id"] == ramo_id]
+    current_user_id = get_jwt_identity()
+    ramo = Ramo.query.filter_by(id=ramo_id, usuario_id=current_user_id).first_or_404()
+    
+    hitos_del_ramo = ramo.hitos
     datos_para_grafico = {
-        'labels': [h["titulo"] for h in hitos_del_ramo],
-        'datasets': [{'label': 'Tiempo dedicado (en segundos)', 'data': [calcular_tiempo_hito(h["id"]) for h in hitos_del_ramo]}]
+        'labels': [h.titulo for h in hitos_del_ramo],
+        'datasets': [{'label': 'Tiempo dedicado (en segundos)', 'data': [h.tiempo_total for h in hitos_del_ramo]}]
     }
     return jsonify(datos_para_grafico)
 
 @bp.route("/<int:ramo_id>/grafico/progreso", methods=["GET"])
+@jwt_required() # <-- Ruta protegida
 def get_grafico_progreso(ramo_id):
-    """
-    (MOVIDO DESDE graficos.py)
-    Prepara datos para un gráfico de progreso por hito.
-    URL: GET /api/ramos/<id>/grafico/progreso
-    """
-    hitos_del_ramo = [h for h in db_hitos if h["ramo_id"] == ramo_id]
+    current_user_id = get_jwt_identity()
+    ramo = Ramo.query.filter_by(id=ramo_id, usuario_id=current_user_id).first_or_404()
+    
+    hitos_del_ramo = ramo.hitos
     datos_para_grafico = {
-        'labels': [h["titulo"] for h in hitos_del_ramo],
-        'datasets': [{'label': 'Progreso de Hitos (%)', 'data': [round(calcular_progreso_hito(h["id"]), 2) for h in hitos_del_ramo]}]
+        'labels': [h.titulo for h in hitos_del_ramo],
+        'datasets': [{'label': 'Progreso de Hitos (%)', 'data': [round(h.progreso, 2) for h in hitos_del_ramo]}]
     }
     return jsonify(datos_para_grafico)
