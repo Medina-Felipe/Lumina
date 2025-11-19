@@ -2,7 +2,6 @@
 from flask import Blueprint, jsonify, request
 from .. import db
 from ..models import Ramo, Hito, Tarea
-# --- ¡Nuevas importaciones! ---
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 bp = Blueprint("tareas", __name__)
@@ -11,9 +10,7 @@ bp = Blueprint("tareas", __name__)
 @jwt_required() # <-- Ruta protegida
 def update_tarea(tarea_id):
     """Actualiza una tarea, verificando que pertenezca al usuario."""
-    current_user_id = get_jwt_identity()
-    
-    # 1. Hacemos un "doble join" para llegar hasta Ramo y verificar al dueño
+    current_user_id = int(get_jwt_identity())
     tarea_a_actualizar = Tarea.query.join(Hito).join(Ramo).filter(
         Tarea.id == tarea_id,
         Ramo.usuario_id == current_user_id
@@ -37,9 +34,8 @@ def update_tarea(tarea_id):
 @jwt_required() # <-- Ruta protegida
 def delete_tarea(tarea_id):
     """Elimina una tarea, verificando que pertenezca al usuario."""
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
 
-    # 2. Doble join, igual que arriba
     tarea_a_borrar = Tarea.query.join(Hito).join(Ramo).filter(
         Tarea.id == tarea_id,
         Ramo.usuario_id == current_user_id
