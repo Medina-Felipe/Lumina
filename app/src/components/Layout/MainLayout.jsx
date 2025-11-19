@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 
-
-const MainLayout = ({ children, navigateTo, headerTitle, currentPage }) => {
+// 1. Ya no recibimos navigateTo ni currentPage
+const MainLayout = ({ children, headerTitle }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false); 
 
     const toggleSidebar = () => {
@@ -23,13 +23,13 @@ const MainLayout = ({ children, navigateTo, headerTitle, currentPage }) => {
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
             `}>
 
+                {/* 2. Sidebar ya no necesita props de navegación */}
                 <Sidebar 
-                    navigateTo={navigateTo} 
-                    currentPage={currentPage} 
                     toggleSidebar={toggleSidebar} 
                 />
             </div>
             
+            {/* Fondo oscuro al abrir menú en móvil */}
             {isSidebarOpen && (
                 <div 
                     className="fixed inset-0 bg-black opacity-50 z-40 md:hidden"
@@ -40,9 +40,9 @@ const MainLayout = ({ children, navigateTo, headerTitle, currentPage }) => {
             {/* Contenido Principal */}
             <div className="flex-grow flex flex-col md:ml-0">
 
+                {/* 3. Header recibe el título y la función para abrir el menú móvil */}
                 <Header 
                     titulo={headerTitle} 
-                    navigateTo={navigateTo} 
                     toggleSidebar={toggleSidebar} 
                 /> 
                 

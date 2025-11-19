@@ -1,5 +1,5 @@
 ## api/app/models.py
-from . import db
+from . import db, bcrypt
 
 class Usuario(db.Model):
     __tablename__ = 'usuario'

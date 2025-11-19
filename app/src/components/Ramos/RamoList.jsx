@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { BookOpen, AlertTriangle, Trash2, Loader2 } from 'lucide-react';
-import { useAuth } from '../../../contexts/AuthContext.jsx'; // Necesario para el token
-
-const API_URL = 'http://127.0.0.1:5000/api/ramos/';
+import { BookOpen, Trash2, Loader2 } from 'lucide-react';
+import apiClient from '../../utils/apiClient'; // 1. Usamos nuestro cliente configurado
 
 /**
  * Muestra una lista de tarjetas de Ramos y permite eliminarlos.
@@ -11,12 +9,11 @@ const API_URL = 'http://127.0.0.1:5000/api/ramos/';
  * @param {function} props.onRamoDeleted - Función para llamar después de eliminar exitosamente un ramo.
  */
 const RamoList = ({ ramos, onRamoDeleted }) => {
-    const { authToken } = useAuth();
-    const [deletingId, setDeletingId] = useState(null); // Estado para manejar el loading en el botón
+    // 2. Ya no necesitamos useAuth aquí, apiClient maneja el token internamente.
+    const [deletingId, setDeletingId] = useState(null); 
 
     /**
-     * Maneja la eliminación de un ramo.
-     * @param {string} ramoId - El ID del ramo a eliminar.
+     * Maneja la eliminación de un ramo usando apiClient.
      */
     const handleDelete = async (ramoId) => {
         if (!window.confirm("¿Estás seguro de que quieres eliminar esta asignatura y todos sus hitos asociados?")) {
@@ -26,34 +23,22 @@ const RamoList = ({ ramos, onRamoDeleted }) => {
         setDeletingId(ramoId);
 
         try {
-            const response = await fetch(`${API_URL}${ramoId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${authToken}`,
-                },
-            });
+            // 3. Llamada limpia con Axios (DELETE /ramos/:id)
+            await apiClient.delete(`/ramos/${ramoId}`);
 
-            if (response.status === 204) {
-                // Éxito: El servidor responde sin contenido para DELETE exitoso
-                alert("Asignatura eliminada con éxito.");
-                // Llama a la función de callback para actualizar la lista en HomePage
-                if (onRamoDeleted) { 
-                    onRamoDeleted(); 
-                }
-            } else if (response.ok) {
-                // Caso donde el servidor devuelve 200/202 con mensaje
-                alert("Asignatura eliminada con éxito.");
-                if (onRamoDeleted) { 
-                    onRamoDeleted(); 
-                }
-            } else {
-                const errorData = await response.json();
-                throw new Error(errorData.mensaje || `Error ${response.status} al eliminar.`);
+            // Si Axios no lanza error, significa que fue exitoso (200 o 204)
+            alert("Asignatura eliminada con éxito.");
+            
+            // Actualizamos la lista en el componente padre
+            if (onRamoDeleted) { 
+                onRamoDeleted(); 
             }
 
         } catch (error) {
             console.error('Error al eliminar el ramo:', error);
-            alert(`Error al eliminar: ${error.message}`);
+            // Intentamos mostrar el mensaje que viene del backend
+            const msg = error.response?.data?.error || error.message || "Error al eliminar.";
+            alert(`Error al eliminar: ${msg}`);
         } finally {
             setDeletingId(null);
         }
@@ -61,7 +46,7 @@ const RamoList = ({ ramos, onRamoDeleted }) => {
 
     if (!ramos || ramos.length === 0) {
         return (
-            <div className="text-center p-6 text-gray-500">
+            <div className="text-center p-6 text-gray-500 bg-white rounded-xl shadow-sm border border-gray-200">
                 Aún no tienes asignaturas creadas.
             </div>
         );
@@ -83,19 +68,19 @@ const RamoList = ({ ramos, onRamoDeleted }) => {
                             <span 
                                 className={`px-3 py-1 text-xs font-semibold rounded-full ${ramo.prioridad === 'Alta' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}
                             >
-                                {ramo.estado}
+                                {ramo.estado || 'Activo'}
                             </span>
                         </div>
                         
-                        <p className="text-sm text-gray-600 mb-4">
+                        <p className="text-sm text-gray-600 mb-4 line-clamp-3">
                             {ramo.descripcion}
                         </p>
                     </div>
 
                     <div className="flex justify-between items-center border-t pt-3 mt-3">
                         <div className="text-xs text-gray-500">
-                            <p>ID: {ramo.id}</p>
                             <p>Prioridad: {ramo.prioridad}</p>
+                            {/* Puedes agregar más info aquí si quieres, como fecha */}
                         </div>
                         
                         <button

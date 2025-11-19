@@ -2,12 +2,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './index.css'; 
-import { AuthProvider } from './contexts/AuthContext.jsx';  
+// YA NO importamos AuthProvider aquí, porque vive dentro de App.jsx
 
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
-        <AuthProvider> 
-            <App />
-        </AuthProvider>
+        {/* Limpiamos: Solo renderizamos App, ella se encarga del resto */}
+        <App />
     </React.StrictMode>,
 );

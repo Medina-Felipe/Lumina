@@ -7,7 +7,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 bp = Blueprint("ramos", __name__)
 
-@bp.route("/", methods=["GET"])
+@bp.route("", methods=["GET"])
 @jwt_required() # <-- 1. ¡Ruta protegida!
 def get_ramos():
     """Devuelve TODOS los ramos PERO solo del usuario que ha iniciado sesión."""
@@ -19,7 +19,7 @@ def get_ramos():
     
     return jsonify([ramo.to_dict() for ramo in ramos])
 
-@bp.route("/", methods=["POST"])
+@bp.route("", methods=["POST"])
 @jwt_required() # <-- Ruta protegida
 def create_ramo():
     """Crea un nuevo ramo para el usuario actual."""
@@ -38,6 +38,15 @@ def create_ramo():
     db.session.commit()
     
     return jsonify(nuevo_ramo.to_dict()), 201
+
+# --- RUTA NUEVA: OBTENER UN SOLO RAMO ---
+@bp.route("/<int:ramo_id>", methods=["GET"])
+@jwt_required()
+def get_ramo(ramo_id):
+    current_user_id = get_jwt_identity()
+    # Buscamos el ramo y aseguramos que sea del dueño
+    ramo = Ramo.query.filter_by(id=ramo_id, usuario_id=current_user_id).first_or_404()
+    return jsonify(ramo.to_dict())
 
 @bp.route("/<int:ramo_id>", methods=["DELETE"])
 @jwt_required() # <-- Ruta protegida

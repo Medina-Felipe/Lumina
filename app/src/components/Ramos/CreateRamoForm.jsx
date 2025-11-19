@@ -1,29 +1,21 @@
 import React, { useState } from 'react';
 import { PlusCircle, Loader2 } from 'lucide-react'; 
-// RUTA CRÍTICA: Se corrige la ruta de importación del hook de autenticación
-import { useAuth } from '../../../contexts/AuthContext.jsx'; 
+import { useAuth } from "../../contexts/AuthContext";
+import apiClient from '../../utils/apiClient'; // 1. Usamos nuestro cliente configurado
 
-const API_URL = 'http://127.0.0.1:5000/api/ramos/'; 
-
-/**
- * Componente del formulario para crear un nuevo Ramo.
- * @param {object} props - Propiedades del componente.
- * @param {function} props.onRamoCreated - Función para llamar después de crear exitosamente un ramo.
- */
 const CreateRamoForm = ({ onRamoCreated }) => {
-  // Obtener el token de autenticación usando el contexto
-  const { authToken, isLoggedIn } = useAuth();
+  // 2. Solo necesitamos saber si está logueado para validación visual
+  const { isLoggedIn } = useAuth();
 
   // Estado para los campos del formulario
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   
-  // Estado para la interfaz (cargando, errores, éxito)
+  // Estado para la interfaz
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
 
-  // Valores por defecto
   const defaultPrioridad = 'Normal'; 
   const defaultEstado = 'Activo';
 
@@ -32,9 +24,10 @@ const CreateRamoForm = ({ onRamoCreated }) => {
     setMessage('');
     setIsError(false);
     
-    if (!isLoggedIn || !authToken) {
+    // Validación local básica
+    if (!isLoggedIn) {
        setIsError(true);
-       setMessage('ERROR: No estás autenticado. Debes iniciar sesión para crear ramos.');
+       setMessage('ERROR: Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
        return;
     }
     
@@ -47,45 +40,37 @@ const CreateRamoForm = ({ onRamoCreated }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // CRÍTICO: Usar el token del contexto
-          'Authorization': `Bearer ${authToken}`, 
-        },
-        body: JSON.stringify({
+      // 3. Llamada limpia con apiClient
+      // No hace falta poner headers ni token, apiClient lo hace por ti.
+      const response = await apiClient.post('/ramos', {
           titulo: titulo,
           descripcion: descripcion,
-          prioridad: defaultPrioridad, 
+          prioridad: defaultPrioridad,
           estado: defaultEstado,
-        }),
       });
 
-      const data = await response.json();
-
-      if (response.ok && response.status === 201) {
-        setIsError(false);
-        setMessage(`Ramo creado con éxito: ${data.titulo}. ¡Ya puedes agregar hitos!`);
-        // Limpiar formulario
-        setTitulo('');
-        setDescripcion('');
-        
-        // Llamar a la función de la prop para actualizar la lista en HomePage
-        if (onRamoCreated) { 
-            onRamoCreated(); 
-        }
-
-      } else {
-        setIsError(true);
-        const errorMsg = data.mensaje || data.msg || 'Error desconocido del servidor.';
-        setMessage(`Error ${response.status}: ${errorMsg}`);
+      // Si llegamos aquí, es porque Axios recibió un 200/201 (Éxito)
+      setIsError(false);
+      setMessage(`Ramo creado con éxito: ${response.data.titulo}. ¡Ya puedes agregar hitos!`);
+      
+      // Limpiar formulario
+      setTitulo('');
+      setDescripcion('');
+      
+      // Actualizar la lista padre
+      if (onRamoCreated) { 
+          onRamoCreated(); 
       }
 
     } catch (error) {
-      setIsError(true);
-      setMessage(`Error de conexión: Asegúrate que el backend de Flask esté corriendo en 5000.`);
+      // 4. Manejo de errores con Axios
       console.error('Error al crear el ramo:', error);
+      setIsError(true);
+      
+      // Intentamos leer el mensaje de error que manda el backend (si existe)
+      const errorMsg = error.response?.data?.error || 'Error de conexión con el servidor.';
+      setMessage(`Error: ${errorMsg}`);
+      
     } finally {
       setIsLoading(false);
     }
@@ -95,7 +80,7 @@ const CreateRamoForm = ({ onRamoCreated }) => {
     <div className="max-w-xl mx-auto p-6 bg-white rounded-xl shadow-xl border-t-4 border-indigo-500">
       <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
         <PlusCircle className="w-6 h-6 mr-3 text-indigo-600" />
-        Crear Nueva Asignatura (Ramo)
+        Crear Nueva Asignatura
       </h2>
       
       {/* Mensaje de estado */}
@@ -134,7 +119,7 @@ const CreateRamoForm = ({ onRamoCreated }) => {
             onChange={(e) => setDescripcion(e.target.value)}
             rows="3"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 resize-none"
-            placeholder="Breve descripción del curso, código o nombre del profesor."
+            placeholder="Breve descripción del curso..."
             required
             disabled={isLoading}
           ></textarea>
@@ -149,7 +134,7 @@ const CreateRamoForm = ({ onRamoCreated }) => {
           {isLoading ? (
             <>
               <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-              Creando Ramo...
+              Creando...
             </>
           ) : (
             'Crear Ramo'

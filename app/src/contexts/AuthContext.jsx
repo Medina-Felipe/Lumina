@@ -1,37 +1,79 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AuthService } from '../utils/apiClient'; 
 import { useNavigate } from 'react-router-dom';
+import apiClient from '../utils/apiClient';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [token, setToken] = useState(localStorage.getItem('access_token')); 
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
+    useEffect(() => {
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            setUser({ token });
+        }
+        setLoading(false);
+    }, []);
+
+    // --- LOGIN ---
     const login = async (email, password) => {
         try {
-            const data = await AuthService.login(email, password);
-            
-            localStorage.setItem('access_token', data.access_token);
-            setToken(data.access_token);
-            
-        } catch (err){
-            throw err; 
+            const response = await apiClient.post('/auth/login', { email, password });
+            const { access_token } = response.data;
+            localStorage.setItem('access_token', access_token);
+            setUser({ token: access_token });
+            return { success: true };
+        } catch (err) {
+            console.error("Error en login:", err);
+            return { 
+                success: false, 
+                error: err.response?.data?.error || "Error al iniciar sesión" 
+            };
         }
     };
 
-    const logout = () => {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('userId');
-        setToken(null);
+    // --- REGISTRO (NUEVO) ---
+    const register = async (nombre, email, password) => {
+        try {
+            // Llamada al backend: POST /api/auth/register
+            await apiClient.post('/auth/register', { 
+                nombre, 
+                email, 
+                password 
+            });
+            return { success: true };
+        } catch (err) {
+            console.error("Error en registro:", err);
+            return { 
+                success: false, 
+                error: err.response?.data?.error || "Error al registrarse" 
+            };
+        }
     };
 
-    const isLoggedIn = !!token;
+    // --- LOGOUT ---
+    const logout = () => {
+        localStorage.removeItem('access_token');
+        setUser(null);
+        navigate('/login');
+    };
+
+    const value = {
+        user,
+        login,
+        register, // ¡Exportamos la nueva función!
+        logout,
+        loading,
+        isLoggedIn: !!user
+    };
 
     return (
-        <AuthContext.Provider value={{ token, isLoggedIn, login, logout }}>
-            {children}
+        <AuthContext.Provider value={value}>
+            {!loading && children}
         </AuthContext.Provider>
     );
 };
+
 export const useAuth = () => useContext(AuthContext);

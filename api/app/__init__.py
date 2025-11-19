@@ -1,16 +1,14 @@
 # api/app/__init__.py
-# (Versión CORREGIDA v3: arregla NameError)
 
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_bcrypt import Bcrypt         # <-- ¡MOVIMOS ESTA LÍNEA AQUÍ!
-from flask_jwt_extended import JWTManager # <-- ¡Y ESTA TAMBIÉN!
+from flask_bcrypt import Bcrypt
+from flask_jwt_extended import JWTManager
 import os
 from sqlalchemy import MetaData
 
-# Definimos la "convención de nombres" para SQLAlchemy
 convention = {
     "ix": 'ix_%(column_0_label)s',
     "uq": "uq_%(table_name)s_%(column_0_name)s",
@@ -19,31 +17,47 @@ convention = {
     "pk": "pk_%(table_name)s"
 }
 
-# Creamos las instancias de las extensiones
 metadata = MetaData(naming_convention=convention)
 db = SQLAlchemy(metadata=metadata)
 migrate = Migrate()
-bcrypt = Bcrypt()     # <-- Ahora Python sabe qué es 'Bcrypt'
-jwt = JWTManager()    # <-- Ahora Python sabe qué es 'JWTManager'
+bcrypt = Bcrypt()
+jwt = JWTManager()
 
 def create_app():
-    """Crea y configura la aplicación Flask."""
     app = Flask(__name__)
-    CORS(app)
+    
+    # CORS permisivo para evitar errores de conexión
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-    # --- Configuración (igual que antes) ---
     basedir = os.path.abspath(os.path.dirname(__file__))
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, '../lumina.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['JWT_SECRET_KEY'] = 'mi-llave-secreta-para-lumina-proyecto' 
 
-    # --- Conectar Extensiones ---
     db.init_app(app)
     migrate.init_app(app, db)
     bcrypt.init_app(app)
     jwt.init_app(app)
 
-    # --- Importar y Registrar Blueprints (Rutas) ---
+    # --- MANEJADORES DE ERRORES JWT (¡NUEVO!) ---
+    # Esto nos dirá en la terminal por qué falla el token
+    
+    @jwt.invalid_token_loader
+    def invalid_token_callback(error):
+        print(f"\n❌ TOKEN INVÁLIDO: {error}\n")
+        return jsonify({"error": "Token inválido", "detalle": error}), 422
+
+    @jwt.unauthorized_loader
+    def missing_token_callback(error):
+        print(f"\n❌ TOKEN FALTANTE: {error}\n")
+        return jsonify({"error": "Falta el token de autorización", "detalle": error}), 401
+
+    @jwt.expired_token_loader
+    def expired_token_callback(jwt_header, jwt_payload):
+        print(f"\n❌ TOKEN EXPIRADO\n")
+        return jsonify({"error": "El token ha expirado", "token_expired": True}), 401
+
+    # --- Registro de Blueprints ---
     from .routes.ramos import bp as ramos_bp
     from .routes.hitos import bp as hitos_bp
     from .routes.tareas import bp as tareas_bp
@@ -54,10 +68,7 @@ def create_app():
     app.register_blueprint(tareas_bp, url_prefix="/api/tareas")
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
 
-    # Cargar los modelos
     with app.app_context():
         from . import models
 
     return app
-
-# (Ya no necesitamos las importaciones aquí abajo)
