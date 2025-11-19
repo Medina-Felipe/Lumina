@@ -11,10 +11,7 @@ const PAGE_CONFIG = {
         component: TareasPage, 
         headerTitle: 'Proyecto Aplicación' 
     },
-    'home': { 
-        component: HomePage, 
-        headerTitle: null 
-    },
+    'home': { component: HomePage, headerTitle: null },
     'search': { component: HomePage, headerTitle: 'Buscar' },
     'progreso': { component: HomePage, headerTitle: 'Progreso' },
     'ramos': { component: HomePage, headerTitle: 'Ramos' },
@@ -31,27 +28,43 @@ const getPage = (currentPage) => {
 
 
 function App() {
-    // 1. Estado para saber si el usuario está autenticado en la aplicación principal
-    const [isAuthenticated, setIsAuthenticated] = useState(false); 
-    // 2. Estado para manejar la vista dentro del flujo de autenticación 
-    const [currentAuthView, setCurrentAuthView] = useState('welcome'); // Inicia en welcome
+    const { isLoggedIn, logout } = useAuth(); 
     
+    const [currentAuthView, setCurrentAuthView] = useState('welcome');
     const [currentPage, setCurrentPage] = useState('home'); 
+
+    useEffect(() => {
+        if (isLoggedIn) {
+            setCurrentPage('proyecto_aplicacion');
+        } else {
+            setCurrentAuthView('welcome');
+            setCurrentPage('home'); 
+        }
+    }, [isLoggedIn]);
 
     const navigateTo = (page) => {
         setCurrentPage(page);
-    };
-
-    const handleLoginSuccess = (success) => {
-        if (success) {
-            setIsAuthenticated(true);
-            setCurrentPage('proyecto_aplicacion'); 
-        }
     };
     
     const handleAuthNavigate = (view) => {
         setCurrentAuthView(view);
     };
+
+    if (!isLoggedIn) {
+        if (currentAuthView === 'login') {
+            // LoginPage ya no necesita onLogin
+            return <LoginPage onNavigateBack={() => handleAuthNavigate('welcome')} />;
+        } else if (currentAuthView === 'register') {
+            return (
+                <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 p-6 text-white">
+                    {/* ... (Página de registro) ... */}
+                    <button onClick={() => handleAuthNavigate('login')} className="bg-yellow-500 px-4 py-2 rounded ml-4">Volver al Login</button>
+                </div>
+            );
+        } else { 
+            return <WelcomePage onNavigate={handleAuthNavigate} />;
+        }
+    }
 
 
     if (!isAuthenticated) {
@@ -72,11 +85,17 @@ function App() {
     const currentConfig = PAGE_CONFIG[currentPage] || PAGE_CONFIG['home'];
     const currentHeaderTitle = currentConfig.headerTitle;
 
+    const handleLogout = () => {
+        logout();
+        setCurrentPage('home');
+    };
+
     return (
         <MainLayout 
             navigateTo={navigateTo}
             headerTitle={currentHeaderTitle}
             currentPage={currentPage} 
+            handleLogout={handleLogout}
         > 
             {getPage(currentPage)}
         </MainLayout>

@@ -16,3 +16,6 @@ Thumbs.db
 
 # Archivos de entorno
 .env
+
+# Directorio de dependencias de Node
+node_modules

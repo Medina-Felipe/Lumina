@@ -1,19 +1,27 @@
 import logo from '../image/luminaLogo.png';
-
 import React, { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 const LoginPage = ({ onLogin, onNavigateBack }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
-    const handleSubmit = (e) => {
+    const { login } = useAuth();
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Lógica de autenticación (simulada)
-        if (email && password) {
-            console.log('Intento de login con:', email);
-            onLogin(true);
-        } else {
-            alert('Por favor, ingresa correo y contraseña.');
+        setError(''); 
+        setLoading(true);
+
+        try {
+            await login(email, password); 
+            
+        } catch (err) {
+            setError(err.message || 'Error desconocido al iniciar sesión. Intenta de nuevo.');
+        } finally {
+            setLoading(false);
         }
     };
 
