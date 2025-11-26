@@ -11,11 +11,11 @@ Instalar dependencias: pip install -r requirements.txt
 Borrar la carpeta migrations
 - Escribir en la ruta de apo
 $env:FLASK_APP = "app.py"
-# 1. Inicializar 
+- Inicializar 
 flask db init
- # 2. Crear la receta (IMPORTANTE: Fíjate que diga "usuario", "ramo", etc. en la salida) 
+- Crear la receta (IMPORTANTE: Fíjate que diga "usuario", "ramo", etc. en la salida) 
 flask db migrate -m "Inicializacion desde cero" 
-# 3. Aplicar la receta (Crear las tablas) 
+ - Aplicar la receta (Crear las tablas) 
 flask db upgrade
 
 Ejecutar app.py
