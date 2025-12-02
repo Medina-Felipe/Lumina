@@ -1,0 +1,26 @@
+# 1. Imagen base de Python
+FROM python:3.11-slim-buster
+
+# 2. Directorio de trabajo temporal para copiar 'requirements.txt'
+WORKDIR /usr/src/api_setup
+
+# 3. Copia de requisitos e instalación de dependencias
+# El archivo requirements.txt está en la raíz de LUMINA
+COPY api/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# --- Setup de la Aplicación ---
+
+# Esto se basa en tu estructura: LUMINA/api/
+WORKDIR /usr/src/app
+
+# 5. Copia el contenido de la carpeta 'api' al WORKDIR
+COPY api/ .
+
+# 6. Puerto de la API (Flask por defecto)
+EXPOSE 5000
+
+# 7. Comando de inicio
+# Ejecuta 'app.py' que ahora está en el WORKDIR (/usr/src/app)
+# Este es el comando que levanta tu servidor Flask
+CMD ["python3", "app.py"]
