@@ -22,6 +22,8 @@ FROM nginx:alpine
 
 # Copiar los archivos estáticos generados por Vite
 # La carpeta 'dist' es el output por defecto de 'npm run build'
+COPY app/nginx.conf /etc/nginx/conf.d/default.conf
+
 COPY --from=builder /usr/src/app/dist /usr/share/nginx/html
 
 # 9. Puerto del servidor web (Nginx)
