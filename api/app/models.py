@@ -9,8 +9,10 @@ class Usuario(db.Model):
     password_hash = db.Column(db.String(128), nullable=False) # Guardará la contraseña encriptada
     nombre = db.Column(db.String(100), nullable=True)
 
+    # Relación: Un usuario puede tener muchos ramos
     ramos = db.relationship('Ramo', back_populates='propietario', lazy=True, cascade='all, delete-orphan')
 
+    # --- Métodos de Contraseña ---
     def set_password(self, password_plana):
         """Toma una contraseña en texto plano y la guarda hasheada."""
         self.password_hash = bcrypt.generate_password_hash(password_plana).decode('utf-8')
@@ -27,9 +29,15 @@ class Ramo(db.Model):
     prioridad = db.Column(db.String(50), default='Media')
     estado = db.Column(db.String(50), default='Pendiente')
     hitos = db.relationship('Hito', back_populates='ramo', lazy=True, cascade='all, delete-orphan')
+
+    # --- ¡CAMBIO CLAVE EN LA BASE DE DATOS! ---
+    # 1. Añadimos la columna para saber a qué usuario pertenece este Ramo.
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+
     propietario = db.relationship('Usuario', back_populates='ramos')
 
+    # --- Lógica de Cálculo (¡Nuevo!) ---
+    # Esto reemplaza a utils.py
     @property
     def tiempo_total(self):
         """Calcula el tiempo total sumando el de sus hitos."""
@@ -42,6 +50,7 @@ class Ramo(db.Model):
             return 0
         return sum(hito.progreso for hito in self.hitos) / len(self.hitos)
 
+    # --- Conversor a JSON (¡Nuevo!) ---
     def to_dict(self):
         """Convierte el objeto Ramo a un diccionario para la API."""
         return {
@@ -50,9 +59,9 @@ class Ramo(db.Model):
             'descripcion': self.descripcion,
             'prioridad': self.prioridad,
             'estado': self.estado,
-            'progreso': round(self.progreso, 2),
-            'tiempo_total': self.tiempo_total,
-            'hitos': [hito.to_dict() for hito in self.hitos]
+            'progreso': round(self.progreso, 2),        # Usa la propiedad calculada
+            'tiempo_total': self.tiempo_total,  # Usa la propiedad calculada
+            'hitos': [hito.to_dict() for hito in self.hitos] # Anida los hitos
         }
 
 class Hito(db.Model):
@@ -66,6 +75,7 @@ class Hito(db.Model):
     ramo = db.relationship('Ramo', back_populates='hitos')
     tareas = db.relationship('Tarea', back_populates='hito', lazy=True, cascade='all, delete-orphan')
 
+    # --- Lógica de Cálculo (¡Nuevo!) ---
     @property
     def tiempo_total(self):
         """Calcula el tiempo total sumando el de sus tareas."""
@@ -79,6 +89,7 @@ class Hito(db.Model):
         completadas = sum(1 for tarea in self.tareas if tarea.completada)
         return (completadas / len(self.tareas)) * 100
 
+    # --- Conversor a JSON (¡Nuevo!) ---
     def to_dict(self):
         return {
             'id': self.id,
@@ -102,6 +113,7 @@ class Tarea(db.Model):
     hito_id = db.Column(db.Integer, db.ForeignKey('hito.id'), nullable=False)
     hito = db.relationship('Hito', back_populates='tareas')
 
+    # --- Conversor a JSON (¡Nuevo!) ---
     def to_dict(self):
         return {
             'id': self.id,

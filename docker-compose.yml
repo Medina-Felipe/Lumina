@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # 1. Servicio del Backend (API)
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile.api
+    command: python app.py
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      # **CLAVE:** Tu Flask-SQLAlchemy necesita leer esta variable
+      DATABASE_URL: postgresql://user:password@db:5432/mydatabase 
+      # Puedes eliminar FLASK_APP si ya no usas comandos de 'flask'
+    depends_on:
+      - db
+
+  # 2. Servicio del Frontend (App)
+  frontend:
+    build: 
+      context: .
+      dockerfile: Dockerfile.app
+    ports:
+      - "5173:80" # Mapeo de puerto Host 5173 a Contenedor 80 (Nginx)
+
+  # 3. Servicio de la Base de Datos (DB)
+  db:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydatabase
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:
