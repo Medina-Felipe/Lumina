@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // 1. Importamos hook de navegación
-import { useAuth } from '../contexts/AuthContext.jsx';
+import { useNavigate } from 'react-router-dom'; import { useAuth } from '../contexts/AuthContext.jsx';
 import logo from '../image/luminaLogo.png';
 
-// 2. Ya no recibimos props (onLogin, onNavigateBack se van)
 const LoginPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -11,23 +9,20 @@ const LoginPage = () => {
     const [error, setError] = useState('');
 
     const { login } = useAuth();
-    const navigate = useNavigate(); // 3. Inicializamos el hook
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError(''); 
+        setError('');
         setLoading(true);
 
-        // Llamamos al login del contexto
         const resultado = await login(email, password);
 
         setLoading(false);
 
         if (resultado.success) {
-            // 4. Si el login es correcto, React Router nos lleva al Home
-            navigate('/'); 
+            navigate('/');
         } else {
-            // Si falló, mostramos el error que nos devolvió el contexto
             setError(resultado.error || 'Error desconocido al iniciar sesión.');
         }
     };
@@ -48,13 +43,13 @@ const LoginPage = () => {
                 </h2>
             </div>
 
-            {/* Mostramos mensaje de error si existe */}
+            {/* Mensaje de Error Visible */}
             {error && (
-                <div className="bg-red-500 text-white p-3 rounded mb-4 w-full max-w-md text-center">
-                    {error}
+                <div className="mb-4 p-3 bg-red-500/10 border border-red-500 rounded-lg flex items-center">
+                    <svg className="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span className="text-red-200 text-sm font-medium">{error}</span>
                 </div>
             )}
-
             <form
                 onSubmit={handleSubmit}
                 className="bg-gray-900 p-8 rounded-xl w-full max-w-md"
@@ -105,11 +100,19 @@ const LoginPage = () => {
 
             {/* Botón Volver usando navigate */}
             <button
-                onClick={() => navigate('/welcome')} // 5. Navegación explícita a Welcome
+                onClick={() => navigate('/welcome')}
                 className="mt-6 text-gray-500 hover:text-white transition-colors text-sm"
             >
                 Volver
             </button>
+
+            {/* Mensaje de Error Visible */}
+            {error && (
+                <div className="mb-4 p-3 bg-red-500/10 border border-red-500 rounded-lg flex items-center">
+                    <svg className="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span className="text-red-200 text-sm font-medium">{error}</span>
+                </div>
+            )}
         </div>
     );
 };
