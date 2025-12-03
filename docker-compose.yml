@@ -11,9 +11,7 @@ services:
     ports:
       - "5000:5000"
     environment:
-      # **CLAVE:** Tu Flask-SQLAlchemy necesita leer esta variable
       DATABASE_URL: postgresql://user:password@db:5432/mydatabase 
-      # Puedes eliminar FLASK_APP si ya no usas comandos de 'flask'
     depends_on:
       - db
 
