@@ -123,5 +123,3 @@ def test_delete_ramo_authenticated(client, app, auth_token):
     with app.app_context():
         ramo = Ramo.query.filter_by(id=ramo_id).first()
         assert ramo is None
-
-
