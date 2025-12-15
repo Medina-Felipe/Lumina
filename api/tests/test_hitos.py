@@ -122,3 +122,23 @@ def test_delete_hito_not_found(client, auth_token_and_ramo):
     response = client.delete('/api/hitos/9999', headers=headers)
     
     assert response.status_code == 404
+
+
+def test_create_hito_authenticated(client, app, auth_token_and_ramo):
+    """Prueba crear un hito siendo usuario autenticado (UC faltante)."""
+    token, user_id, ramo_id = auth_token_and_ramo
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    response = client.post(f'/api/ramos/{ramo_id}/hitos',
+        headers=headers,
+        json={
+            'titulo': 'Nuevo Hito',
+            'descripcion': 'Descripción del hito',
+            'porcentaje_evaluacion': 25.0,
+            'importancia': 5
+        }
+    )
+    
+    assert response.status_code == 201
+    assert response.json['titulo'] == 'Nuevo Hito'
+    assert response.json['ramo_id'] == ramo_id

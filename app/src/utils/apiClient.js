@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // ------------URL BASE DEL BACKEND-----------
-const API_BASE_URL = '/api'; 
+const API_BASE_URL = 'http://127.0.0.1:5000/api'; 
 
 // Instancia de Axios
 const apiClient = axios.create({
@@ -11,7 +11,7 @@ const apiClient = axios.create({
     },
 });
 
-// --- PARTE 1 (Faltaba): Inyectar el Token al enviar ---
+// Interceptor de Solicitudes (Request): Inyecta el Token
 apiClient.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('access_token');
@@ -25,12 +25,11 @@ apiClient.interceptors.request.use(
     }
 );
 
-// --- PARTE 2 (Ya la tienes): Manejar errores al recibir ---
+// Interceptor de Respuestas (Response): Maneja Token Expirado
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Token inválido o expirado: Limpiamos y mandamos al login
       localStorage.removeItem('access_token');
       window.location.href = '/login'; 
     }
@@ -52,6 +51,20 @@ export const AuthService = {
             throw new Error(errorMessage);
         }
     },
+};
+
+// --- SERVICIO EXTERNO (NUEVO) ---
+export const ExternalService = {
+    async getQuote() {
+        try {
+            const response = await apiClient.get('/external/quote');
+            return response.data;
+        } catch (error) {
+            console.error("Error obteniendo cita en frontend:", error);
+            // Fallback del frontend si falla incluso la conexión a nuestro backend
+            return { quote: "Sigue estudiando, tú puedes.", author: "Lumina", source: "frontend_fallback" };
+        }
+    }
 };
 
 export default apiClient;
