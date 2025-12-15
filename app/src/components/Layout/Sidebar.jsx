@@ -8,12 +8,11 @@ const Sidebar = ({ toggleSidebar }) => {
   
   const [ramosSidebar, setRamosSidebar] = useState([]);
 
-  // Cargar lista de ramos al iniciar
   useEffect(() => {
     const fetchRamosSidebar = async () => {
       try {
         const response = await apiClient.get('/ramos');
-        setRamosSidebar(response.data);
+        setRamosSidebar(response.data.data || response.data);
       } catch (error) {
         console.error("Error cargando ramos en sidebar:", error);
       }
@@ -21,92 +20,68 @@ const Sidebar = ({ toggleSidebar }) => {
     fetchRamosSidebar();
   }, []);
 
-  // Helper para saber si la ruta está activa
   const isActive = (path) => location.pathname === path;
 
-  // Componente interno para los ítems del menú
-  const NavItem = ({ icon, name, path, hasPlus = false, onClick, isActiveItem }) => {
-    // Si se pasa un onClick personalizado, úsalo. Si no, navega al path.
+
+  const NavItem = ({ icon, name, path, onClick, isActiveItem }) => {
     const handleClick = onClick ? onClick : () => navigate(path);
-    
-    // Si se pasa prop isActiveItem, úsala. Si no, calcula con la ruta.
     const active = isActiveItem !== undefined ? isActiveItem : isActive(path);
 
     return (
       <div 
         className={`flex items-center p-3 cursor-pointer rounded-lg transition-colors mb-1 ${
-          active ? 'bg-orange-500 text-white' : 'hover:bg-gray-800 text-gray-400 hover:text-white'
+          active 
+            ? 'bg-orange-500 text-white shadow-md' 
+            : 'hover:bg-gray-800 text-gray-400 hover:text-white'
         }`}
-        onClick={handleClick}
+        onClick={() => {
+            handleClick();
+            if(window.innerWidth < 768) toggleSidebar();
+        }}
       >
-        <span className="text-xl mr-3">{icon}</span>
-        <span className="font-medium mr-auto truncate">{name}</span>
-        {hasPlus && <span className="text-lg font-bold">+</span>}
+        <span className="mr-3 text-xl">{icon}</span>
+        <span className="font-medium text-sm">{name}</span>
       </div>
     );
   };
 
   return (
-    <div className="w-64 bg-black p-4 flex flex-col min-h-screen border-r border-gray-800 overflow-y-auto">
+    <div className="h-full min-h-screen bg-black border-r border-gray-800 flex flex-col p-4">
       
-      {/* LOGO / INICIO */}
-      <div 
-        className="flex items-center text-white text-xl font-bold py-4 mb-6 cursor-pointer hover:text-orange-500 transition-colors"
-        onClick={() => navigate('/')}
-      >
-        <span className="text-2xl mr-2">🏠</span> 
-        Inicio
-      </div>
-
-      {/* SECCIÓN PRINCIPAL */}
-      <div className="mb-6">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-3">
-            General
+      {/* --- Menú Principal --- */}
+      <div className="mb-8">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">
+            Principal
         </p>
-        
-        <NavItem 
-          icon="🔍" 
-          name="Buscar" 
-          path="/search" 
-        /> 
-        
-        <NavItem 
-            icon="📈" 
-            name="Progreso Global" 
-            path="/progreso"
-        />
+        <NavItem icon="🏠" name="Inicio" path="/ramos" />
+        <NavItem icon="📈" name="Progreso Global" path="/progreso" />
+        <NavItem icon="⏱️" name="Estadísticas de Tiempo" path="/tiempo" />
       </div>
 
-      {/* SECCIÓN DE RAMOS (ASIGNATURAS) */}
-      <div className="mb-6 flex-grow"> 
+      {/* --- Mis Ramos --- */}
+      <div className="mb-6 flex-grow flex flex-col min-h-0"> 
         <div className="flex justify-between items-center px-3 mb-2">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 Mis Ramos
             </p>
-            {/* Botón rápido para ir al dashboard y crear */}
             <button 
                 onClick={() => navigate('/ramos')}
-                className="text-gray-500 hover:text-orange-500 text-xs uppercase font-bold"
-                title="Ver todos / Crear nuevo"
+                className="text-gray-500 hover:text-orange-500 text-xs uppercase font-bold transition-colors"
             >
                 + Crear
             </button>
         </div>
 
-        {/* LISTA DINÁMICA DE RAMOS */}
-        <div className="space-y-1">
+        <div className="space-y-1 overflow-y-auto pr-2 custom-scrollbar">
           {ramosSidebar.length > 0 ? (
-            ramosSidebar.map((ramo) => {
-              const ramoPath = `/ramos/${ramo.id}`;
-              return (
+            ramosSidebar.map((ramo) => (
                 <NavItem 
                     key={ramo.id}
                     icon="📚" 
                     name={ramo.titulo}
-                    path={ramoPath}
+                    path={`/ramos/${ramo.id}`}
                 />
-              );
-            })
+            ))
           ) : (
             <div className="px-3 py-2 text-sm text-gray-600 italic">
                 No tienes ramos.
@@ -115,13 +90,12 @@ const Sidebar = ({ toggleSidebar }) => {
         </div>
       </div>
 
-      {/* FOOTER DEL SIDEBAR */}
-      <div className="mt-auto pt-4 border-t border-gray-800 px-3">
-        <p className="text-xs text-gray-600 text-center">
-            Lumina v1.0
+      {/* --- Footer --- */}
+      <div className="mt-auto pt-4 border-t border-gray-800 px-3 pb-6">
+        <p className="text-xs text-gray-600 text-center font-mono">
+            Lumina v1.2
         </p>
       </div>
-
     </div>
   );
 };
