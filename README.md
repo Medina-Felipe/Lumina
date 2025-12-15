@@ -5,7 +5,7 @@ Este proyecto es una aplicación web de seguimiento de estudios y proyectos para
 1. Clonar repo: git clone https://github.com/Medina-Felipe/Lumina
 2. Dirigirnos a la carpeta del BackEnd usando: cd api
 3. Crear entorno: python -m venv .venv
-4. Activar entorno: .venv/Scripts/activate
+4. Activar entorno: .venv\Scripts\activate
 5. Instalar dependencias: pip install -r requirements.txt
 6. Borrar Carpeta Migrations
 7. En terminal $env:FLASK_APP = "app.py"
