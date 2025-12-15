@@ -1,0 +1,6 @@
+projectKey=Lumina
+serverUrl=http://localhost:9000
+serverVersion=25.11.0.114957
+dashboardUrl=http://localhost:9000/dashboard?id=Lumina
+ceTaskId=9b5b3e96-f911-42c7-a7fc-840488c3bed5
+ceTaskUrl=http://localhost:9000/api/ce/task?id=9b5b3e96-f911-42c7-a7fc-840488c3bed5
