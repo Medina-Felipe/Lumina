@@ -1,116 +1,97 @@
 import React, { useState } from 'react';
 import { PlusCircle, Loader2 } from 'lucide-react'; 
-import { useAuth } from "../../contexts/AuthContext";
-import apiClient from '../../utils/apiClient'; // 1. Usamos nuestro cliente configurado
+import { useAuth } from "../../contexts/AuthContext"; import apiClient from '../../utils/apiClient';
 
 const CreateRamoForm = ({ onRamoCreated }) => {
-  // 2. Solo necesitamos saber si está logueado para validación visual
   const { isLoggedIn } = useAuth();
-
-  // Estado para los campos del formulario
+  
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   
-  // Estado para la interfaz
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
-
-  const defaultPrioridad = 'Normal'; 
-  const defaultEstado = 'Activo';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
     setIsError(false);
     
-    // Validación local básica
     if (!isLoggedIn) {
        setIsError(true);
-       setMessage('ERROR: Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
+       setMessage('ERROR: Sesión expirada.');
        return;
     }
     
     if (!titulo || !descripcion) {
       setIsError(true);
-      setMessage('El título y la descripción son obligatorios.');
+      setMessage('Completa todos los campos.');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // 3. Llamada limpia con apiClient
-      // No hace falta poner headers ni token, apiClient lo hace por ti.
-      const response = await apiClient.post('/ramos', {
+      await apiClient.post('/ramos', {
           titulo: titulo,
           descripcion: descripcion,
-          prioridad: defaultPrioridad,
-          estado: defaultEstado,
+          prioridad: 'Normal', 
+          estado: 'Activo'
       });
 
-      // Si llegamos aquí, es porque Axios recibió un 200/201 (Éxito)
-      setIsError(false);
-      setMessage(`Ramo creado con éxito: ${response.data.titulo}. ¡Ya puedes agregar hitos!`);
-      
-      // Limpiar formulario
+      setMessage('¡Ramo creado exitosamente!');
       setTitulo('');
       setDescripcion('');
       
-      // Actualizar la lista padre
-      if (onRamoCreated) { 
-          onRamoCreated(); 
+      if (onRamoCreated) {
+        onRamoCreated();
       }
+      
+      setTimeout(() => setMessage(''), 3000);
 
     } catch (error) {
-      // 4. Manejo de errores con Axios
-      console.error('Error al crear el ramo:', error);
+      console.error('Error creando ramo:', error);
       setIsError(true);
-      
-      // Intentamos leer el mensaje de error que manda el backend (si existe)
-      const errorMsg = error.response?.data?.error || 'Error de conexión con el servidor.';
-      setMessage(`Error: ${errorMsg}`);
-      
+      setMessage('No se pudo crear el ramo. Inténtalo de nuevo.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="max-w-xl mx-auto p-6 bg-white rounded-xl shadow-xl border-t-4 border-indigo-500">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-        <PlusCircle className="w-6 h-6 mr-3 text-indigo-600" />
-        Crear Nueva Asignatura
-      </h2>
-      
-      {/* Mensaje de estado */}
+    <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700 sticky top-6">
+      <h3 className="text-xl font-bold text-white mb-6 flex items-center">
+        <PlusCircle className="w-6 h-6 mr-2 text-primary-yellow" />
+        Nuevo Ramo
+      </h3>
+
       {message && (
-        <div className={`p-4 mb-4 rounded-lg text-sm font-medium ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+        <div className={`mb-4 p-3 rounded-lg text-sm font-medium ${
+          isError ? 'bg-red-900/50 text-red-200 border border-red-700' : 'bg-green-900/50 text-green-200 border border-green-700'
+        }`}>
           {message}
         </div>
       )}
 
       <form onSubmit={handleSubmit}>
-        {/* Campo Título */}
-        <div className="mb-5">
-          <label htmlFor="titulo" className="block text-sm font-medium text-gray-700 mb-1">
-            Título del Ramo
+        <div className="mb-4">
+          <label htmlFor="titulo" className="block text-sm font-medium text-gray-400 mb-1">
+            Nombre de la Asignatura
           </label>
           <input
-            id="titulo"
             type="text"
+            id="titulo"
             value={titulo}
             onChange={(e) => setTitulo(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150"
-            placeholder="Ej: Álgebra Lineal, Taller de Tesis"
+            className="w-full bg-gray-900 border border-gray-700 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none transition-all placeholder-gray-600"
+            placeholder="Ej: Cálculo I"
             required
             disabled={isLoading}
           />
         </div>
 
-        {/* Campo Descripción */}
         <div className="mb-6">
-          <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="descripcion" className="block text-sm font-medium text-gray-400 mb-1">
             Descripción
           </label>
           <textarea
@@ -118,18 +99,21 @@ const CreateRamoForm = ({ onRamoCreated }) => {
             value={descripcion}
             onChange={(e) => setDescripcion(e.target.value)}
             rows="3"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 resize-none"
-            placeholder="Breve descripción del curso..."
+            maxLength={200}
+            className="w-full bg-gray-900 border border-gray-700 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none transition-all resize-none placeholder-gray-600"
+            placeholder="Breve descripción..."
             required
             disabled={isLoading}
           ></textarea>
+          <p className="text-right text-xs text-gray-500 mt-1">
+            {descripcion.length}/200 caracteres
+          </p>
         </div>
 
-        {/* Botón de Enviar */}
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3 px-4 flex items-center justify-center bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition duration-300 shadow-md disabled:bg-indigo-400 disabled:cursor-not-allowed"
+          className="w-full py-3 px-4 flex items-center justify-center bg-primary-yellow text-gray-900 font-bold rounded-lg hover:bg-yellow-400 transition duration-300 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <>

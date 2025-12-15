@@ -6,17 +6,14 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile.api
-    command: sh -c "flask db upgrade && python app.py"
+    command: python app.py
     restart: always
     ports:
       - "5000:5000"
     environment:
-      DATABASE_URL: postgresql://lumina_user:lumina_pass_2024@db:5432/lumina_db
-      JWT_SECRET_KEY: super-secret-key-change-in-production
-      FLASK_APP: app.py
+      DATABASE_URL: postgresql://user:password@db:5432/mydatabase 
     depends_on:
-      db:
-        condition: service_healthy
+      - db
 
   # 2. Servicio del Frontend (App)
   frontend:
@@ -25,25 +22,18 @@ services:
       dockerfile: Dockerfile.app
     ports:
       - "5173:80" # Mapeo de puerto Host 5173 a Contenedor 80 (Nginx)
-    depends_on:
-      - api
 
   # 3. Servicio de la Base de Datos (DB)
   db:
     image: postgres:14-alpine
     environment:
-      POSTGRES_USER: lumina_user
-      POSTGRES_PASSWORD: lumina_pass_2024
-      POSTGRES_DB: lumina_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydatabase
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     ports:
       - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U lumina_user -d lumina_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
 volumes:
   postgres_data:
