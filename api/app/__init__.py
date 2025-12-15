@@ -29,6 +29,16 @@ def create_app():
     # CORS permisivo para evitar errores de conexión
     CORS(app, resources={r"/api/*": {"origins": "*"}})
 
+    database_url = os.environ.get('DATABASE_URL')
+    
+    if database_url:
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+        print("🐘 Usando PostgreSQL desde Docker")
+    else:
+        basedir = os.path.abspath(os.path.dirname(__file__))
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, '../lumina.db')
+        print("🗄️ Usando SQLite para desarrollo local")
+
     basedir = os.path.abspath(os.path.dirname(__file__))
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, '../lumina.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
