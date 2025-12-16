@@ -1,5 +1,6 @@
 ## api/app/models.py
 from . import db, bcrypt
+from datetime import datetime
 
 class Usuario(db.Model):
     __tablename__ = 'usuario'
@@ -11,6 +12,8 @@ class Usuario(db.Model):
 
     # Relación: Un usuario puede tener muchos ramos
     ramos = db.relationship('Ramo', back_populates='propietario', lazy=True, cascade='all, delete-orphan')
+    # Relación: Un usuario puede tener muchas sesiones de tiempo
+    time_sessions = db.relationship('TimeSession', back_populates='usuario', lazy=True, cascade='all, delete-orphan')
 
     # --- Métodos de Contraseña ---
     def set_password(self, password_plana):
@@ -122,4 +125,30 @@ class Tarea(db.Model):
             'completada': self.completada,
             'tiempo_dedicado': self.tiempo_dedicado,
             'hito_id': self.hito_id
+        }
+
+# Modelo para registrar sesiones de tiempo/estudio
+class TimeSession(db.Model):
+    __tablename__ = 'time_session'
+    id = db.Column(db.Integer, primary_key=True)
+    duration = db.Column(db.Integer, nullable=False)  # Duración en segundos
+    fecha = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Relaciones
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    ramo_id = db.Column(db.Integer, db.ForeignKey('ramo.id'), nullable=True)
+    hito_id = db.Column(db.Integer, db.ForeignKey('hito.id'), nullable=True)
+    tarea_id = db.Column(db.Integer, db.ForeignKey('tarea.id'), nullable=True)
+    
+    usuario = db.relationship('Usuario', back_populates='time_sessions')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'duration': self.duration,
+            'fecha': self.fecha.isoformat() if self.fecha else None,
+            'usuario_id': self.usuario_id,
+            'ramo_id': self.ramo_id,
+            'hito_id': self.hito_id,
+            'tarea_id': self.tarea_id
         }

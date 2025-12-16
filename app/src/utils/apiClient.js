@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // ------------URL BASE DEL BACKEND-----------
-const API_BASE_URL = 'http://127.0.0.1:5000/api'; 
+const API_BASE_URL = '/api'; 
 
 // Instancia de Axios
 const apiClient = axios.create({
@@ -11,7 +11,7 @@ const apiClient = axios.create({
     },
 });
 
-// Interceptor de Solicitudes (Request): Inyecta el Token
+// --- PARTE 1 (Faltaba): Inyectar el Token al enviar ---
 apiClient.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('access_token');
@@ -25,11 +25,12 @@ apiClient.interceptors.request.use(
     }
 );
 
-// Interceptor de Respuestas (Response): Maneja Token Expirado
+// --- PARTE 2 (Ya la tienes): Manejar errores al recibir ---
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
+      // Token inválido o expirado: Limpiamos y mandamos al login
       localStorage.removeItem('access_token');
       window.location.href = '/login'; 
     }
@@ -53,7 +54,7 @@ export const AuthService = {
     },
 };
 
-// --- SERVICIO EXTERNO (NUEVO) ---
+// --- SERVICIO EXTERNO (Quotes Motivacionales) ---
 export const ExternalService = {
     async getQuote() {
         try {

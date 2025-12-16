@@ -89,6 +89,31 @@ def create_hito(ramo_id):
     
     return jsonify(nuevo_hito.to_dict()), 201
 
+# --- Ruta para obtener tiempo total del ramo ---
+@bp.route("/<int:ramo_id>/tiempo", methods=["GET"])
+@jwt_required()
+def get_tiempo_ramo(ramo_id):
+    """Obtiene el tiempo total dedicado a un ramo desde las sesiones de tiempo."""
+    current_user_id = get_jwt_identity()
+    from ..models import TimeSession
+    from sqlalchemy import func
+    
+    # Verificar que el ramo pertenezca al usuario
+    ramo = Ramo.query.filter_by(id=ramo_id, usuario_id=current_user_id).first_or_404()
+    
+    # Calcular tiempo total de las sesiones registradas
+    total = db.session.query(
+        func.sum(TimeSession.duration)
+    ).filter(
+        TimeSession.usuario_id == current_user_id,
+        TimeSession.ramo_id == ramo_id
+    ).scalar()
+    
+    return jsonify({
+        'ramoId': ramo_id,
+        'totalSeconds': total or 0
+    })
+
 # --- Rutas de Gráficos (Protegidas) ---
 
 @bp.route("/<int:ramo_id>/grafico/tiempo", methods=["GET"])
