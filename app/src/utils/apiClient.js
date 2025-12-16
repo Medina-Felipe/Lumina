@@ -1,7 +1,12 @@
 import axios from 'axios';
 
-// ------------URL BASE DEL BACKEND-----------
-const API_BASE_URL = '/api'; 
+// --- CAMBIO AQUÍ ---
+// Comenta o borra la línea de localhost
+// const API_BASE_URL = 'http://127.0.0.1:5000/api'; 
+
+// Descomenta y pon la URL real de tu backend en Render (sin la barra al final si es posible, aunque axios lo maneja)
+// Ejemplo: https://lumina-backend.onrender.com/api
+const API_BASE_URL = 'https://lumina-osun.onrender.com'; 
 
 // Instancia de Axios
 const apiClient = axios.create({
@@ -11,7 +16,7 @@ const apiClient = axios.create({
     },
 });
 
-// --- PARTE 1 (Faltaba): Inyectar el Token al enviar ---
+// Interceptor de Solicitudes (Request): Inyecta el Token
 apiClient.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('access_token');
@@ -25,12 +30,11 @@ apiClient.interceptors.request.use(
     }
 );
 
-// --- PARTE 2 (Ya la tienes): Manejar errores al recibir ---
+// Interceptor de Respuestas (Response): Maneja Token Expirado
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Token inválido o expirado: Limpiamos y mandamos al login
       localStorage.removeItem('access_token');
       window.location.href = '/login'; 
     }
@@ -38,7 +42,7 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Servicio de Autenticación
+// Servicio de Autenticación (Ya existente)
 export const AuthService = {
     async login(email, password) {
         try {
@@ -54,7 +58,7 @@ export const AuthService = {
     },
 };
 
-// --- SERVICIO EXTERNO (Quotes Motivacionales) ---
+// --- SERVICIO EXTERNO (NUEVO) ---
 export const ExternalService = {
     async getQuote() {
         try {
@@ -62,8 +66,11 @@ export const ExternalService = {
             return response.data;
         } catch (error) {
             console.error("Error obteniendo cita en frontend:", error);
-            // Fallback del frontend si falla incluso la conexión a nuestro backend
-            return { quote: "Sigue estudiando, tú puedes.", author: "Lumina", source: "frontend_fallback" };
+            return { 
+                quote: "Sigue estudiando, tú puedes.", 
+                author: "Lumina (Frontend Fallback)", 
+                source: "frontend_fallback" 
+            };
         }
     }
 };
