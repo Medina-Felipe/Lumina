@@ -20,7 +20,7 @@ COPY api/ .
 # 6. Puerto de la API (Flask por defecto)
 EXPOSE 5000
 
-# 7. Comando de inicio
-# Ejecuta 'app.py' que ahora está en el WORKDIR (/usr/src/app)
-# Este es el comando que levanta tu servidor Flask
-CMD ["python3", "app.py"]
+# [cite_start]7. COMANDO DE INICIO (¡Aquí está el cambio clave!) [cite: 4]
+# Usamos "sh -c" para poder unir dos comandos con "&&"
+# Primero actualiza la BD (flask db upgrade) y si funciona, inicia la app
+CMD ["sh", "-c", "flask db upgrade && python3 app.py"]
