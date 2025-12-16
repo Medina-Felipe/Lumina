@@ -1,12 +1,14 @@
 import axios from 'axios';
 
 // --- CAMBIO AQUÍ ---
-// Comenta o borra la línea de localhost
-// const API_BASE_URL = 'http://127.0.0.1:5000/api'; 
+// La URL base DEBE terminar en /api para que coincida con Nginx y Flask
+// ❌ INCORRECTO: 'https://lumina-osun.onrender.com'
+// ✅ CORRECTO:   'https://lumina-osun.onrender.com/api'
 
-// Descomenta y pon la URL real de tu backend en Render (sin la barra al final si es posible, aunque axios lo maneja)
-// Ejemplo: https://lumina-backend.onrender.com/api
-const API_BASE_URL = 'https://lumina-osun.onrender.com'; 
+const API_BASE_URL = 'https://lumina-osun.onrender.com/api'; 
+
+// Si usas variables de entorno en producción (recomendado), sería así:
+// const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Instancia de Axios
 const apiClient = axios.create({
@@ -46,6 +48,8 @@ apiClient.interceptors.response.use(
 export const AuthService = {
     async login(email, password) {
         try {
+            // Axios concatenará baseURL + '/auth/login'
+            // Resultado final: https://lumina-osun.onrender.com/api/auth/login
             const response = await apiClient.post('/auth/login', {
                 email,
                 password,
@@ -58,7 +62,7 @@ export const AuthService = {
     },
 };
 
-// --- SERVICIO EXTERNO (NUEVO) ---
+// --- SERVICIO EXTERNO ---
 export const ExternalService = {
     async getQuote() {
         try {
@@ -76,3 +80,5 @@ export const ExternalService = {
 };
 
 export default apiClient;
+```
+```
