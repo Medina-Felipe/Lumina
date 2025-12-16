@@ -38,9 +38,7 @@ def create_app():
         basedir = os.path.abspath(os.path.dirname(__file__))
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, '../lumina.db')
         print("🗄️ Usando SQLite para desarrollo local")
-
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, '../lumina.db')
+        
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['JWT_SECRET_KEY'] = 'mi-llave-secreta-para-lumina-proyecto' 
 
