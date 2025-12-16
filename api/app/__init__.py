@@ -26,33 +26,21 @@ jwt = JWTManager()
 def create_app():
     app = Flask(__name__)
     
-    # CORS permisivo
+    # CORS permisivo para evitar errores de conexión
     CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-    # 1. Obtenemos la URL
     database_url = os.environ.get('DATABASE_URL')
     
     if database_url:
-        # --- LIMPIEZA Y CORRECCIÓN DE URL (MODO ROBUSTO) ---
-        
-        # Paso A: Quitar espacios en blanco al inicio/final y comillas accidentales
-        database_url = database_url.strip().replace('"', '').replace("'", "")
-        
-        # Paso B: Corregir el protocolo antiguo de Render (postgres:// -> postgresql://)
-        # Solo si empieza EXACTAMENTE con postgres:// lo cambiamos
-        if database_url.startswith("postgres://"):
-            database_url = database_url.replace("postgres://", "postgresql://", 1)
-            
-        # Debug: Imprimimos los primeros caracteres para verificar en logs (sin mostrar la clave)
-        print(f"🐘 Configurando DB con URL: {database_url.split('://')[0]}://*****")
-
         app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+        print("🐘 Usando PostgreSQL desde Docker")
     else:
-        # Configuración local (SQLite)
         basedir = os.path.abspath(os.path.dirname(__file__))
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, '../lumina.db')
         print("🗄️ Usando SQLite para desarrollo local")
-        
+
+    basedir = os.path.abspath(os.path.dirname(__file__))
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, '../lumina.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['JWT_SECRET_KEY'] = 'mi-llave-secreta-para-lumina-proyecto' 
 
@@ -61,7 +49,9 @@ def create_app():
     bcrypt.init_app(app)
     jwt.init_app(app)
 
-    # --- Manejo de errores JWT ---
+    # --- MANEJADORES DE ERRORES JWT (¡NUEVO!) ---
+    # Esto nos dirá en la terminal por qué falla el token
+    
     @jwt.invalid_token_loader
     def invalid_token_callback(error):
         print(f"\n❌ TOKEN INVÁLIDO: {error}\n")
