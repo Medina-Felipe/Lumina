@@ -80,5 +80,3 @@ export const ExternalService = {
 };
 
 export default apiClient;
-```
-```
