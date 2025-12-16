@@ -32,9 +32,9 @@ def create_app():
     database_url = os.environ.get('DATABASE_URL')
     
     if database_url:
-        # --- CORRECCIÓN PARA RENDER ---
-        # Render entrega la URL como "postgres://", pero SQLAlchemy moderno requiere "postgresql://"
-        if database_url.startswith("postgres://"):
+        # --- CORRECCIÓN MEJORADA PARA RENDER ---
+        # Solo corregimos si empieza con "postgres://" Y NO es ya "postgresql://"
+        if database_url.startswith("postgres://") and not database_url.startswith("postgresql://"):
             database_url = database_url.replace("postgres://", "postgresql://", 1)
             
         app.config['SQLALCHEMY_DATABASE_URI'] = database_url
@@ -52,8 +52,7 @@ def create_app():
     bcrypt.init_app(app)
     jwt.init_app(app)
 
-    # --- MANEJADORES DE ERRORES JWT (¡NUEVO!) ---
-    # Esto nos dirá en la terminal por qué falla el token
+    # --- MANEJADORES DE ERRORES JWT ---
     
     @jwt.invalid_token_loader
     def invalid_token_callback(error):
